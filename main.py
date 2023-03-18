@@ -10,9 +10,12 @@ session = Session(bind=engine)
 
 # Routes
 # Root folder (home page)
-@app.get('/')
+@app.get('/', response_class=HTMLResponse)
 async def home():
-    pass
+    return '''
+    <h1>Home Page</h1>
+    <a href='http://127.0.0.1:8000/docs'>http://127.0.0.1:8000/docs</a>
+    '''
 
 # Get all categories
 @app.get('/category')
