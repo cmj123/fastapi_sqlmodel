@@ -24,8 +24,13 @@ async def get_all_categories():
 
 # Post a new category 
 @app.post('/category')
-async def post_a_category():
-    pass
+async def post_a_category(category:Category):
+    new_category = Category(name=category.name)
+    with Session(engine) as session:
+        session.add(new_category)
+        session.commit()
+        session.refresh(new_category)
+    return new_category
 
 # Get a specific category
 @app.get('/category/{category_id}')
