@@ -1,8 +1,11 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, status
+from fastapi.exceptions import HTTPException
 from fastapi.responses import HTMLResponse
-from sqlmodel import SQLModel, Session
+from sqlmodel import SQLModel, Session, select
 from models import Category
 from database import engine 
+import uvicorn
+from typing import List
 
 # Define main app name and database session name
 app = FastAPI()
@@ -18,15 +21,24 @@ async def home():
     '''
 
 # Get all categories
-@app.get('/category')
+@app.get('/category', response_model=List[Category])
 async def get_all_categories():
-    pass
+    with Session(engine) as session:
+        statement = select(Category)
+        result = session.exec(statement)
+        all_categories = result.all()
+    return all_categories
 
 # Post a new category 
-@app.post('/category')
+@app.post('/category', status_code=status.HTTP_201_CREATED)
 async def post_a_category(category:Category):
     new_category = Category(name=category.name)
     with Session(engine) as session:
+        # See if that category name is already in the table
+        statement = select(Category).where(Category.name == category.name)
+        # Reject if name already in use
+        if session.exec(statement).one_or_none():
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Category name already in use')
         session.add(new_category)
         session.commit()
         session.refresh(new_category)
@@ -46,3 +58,6 @@ async def update_a_category(category_id:int):
 @app.delete('/category/{category_id}')
 async def delete_a_category(category_id:int):
     pass
+
+if __name__ == '__main__':
+    uvicorn.run(app, host='0.0.0.0', port=8000)
