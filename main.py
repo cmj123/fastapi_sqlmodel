@@ -45,9 +45,15 @@ async def post_a_category(category:Category):
     return new_category
 
 # Get a specific category
-@app.get('/category/{category_id}')
+@app.get('/category/{category_id}',response_model=Category)
 async def get_a_category(category_id:int):
-    pass
+    with Session(engine) as session:
+        # Alternative syntax when getting one row by id
+        category = session.get(Category, category_id)
+        # Return error if no such category
+        if not category:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No such category")
+    return category
 
 # Update a specific category
 @app.put('/category/{category_id}')
