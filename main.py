@@ -71,9 +71,15 @@ async def update_a_category(category_id:int, category:Category):
 
 
 # Delete a specific category
-@app.delete('/category/{category_id}')
+@app.delete('/category/{category_id}',)
 async def delete_a_category(category_id:int):
-    pass
+    with Session(engine) as session:
+        # Get the category to delete
+        category = session.get(Category, category_id)
+        # Delete the category
+        session.delete(category)
+        session.commit()
+    return {'Deleted':category_id}
 
 if __name__ == '__main__':
     uvicorn.run(app, host='0.0.0.0', port=8000)
