@@ -56,9 +56,19 @@ async def get_a_category(category_id:int):
     return category
 
 # Update a specific category
-@app.put('/category/{category_id}')
-async def update_a_category(category_id:int):
-    pass
+@app.put('/category/{category_id}', response_model=Category)
+async def update_a_category(category_id:int, category:Category):
+    with Session(engine) as session:
+        # Get current category object from table
+        current_category = session.get(Category, category_id)
+        # Replace current category name with the one just passed in
+        current_category.name = category.name
+        # Put back in table with new name
+        session.add(current_category)
+        session.commit()
+        session.refresh(current_category)
+    return current_category
+
 
 # Delete a specific category
 @app.delete('/category/{category_id}')
