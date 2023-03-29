@@ -25,7 +25,7 @@ async def home():
 @app.get('/category', response_model=List[Category])
 async def get_all_categories():
     with Session(engine) as session:
-        statement = select(Category)
+        statement = select(Category).order_by(Category.id.desc())
         result = session.exec(statement)
         all_categories = result.all()
     return all_categories
