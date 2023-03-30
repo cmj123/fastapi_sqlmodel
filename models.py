@@ -6,7 +6,7 @@ from datetime import datetime
 # VidoeBase (main user fields for Video table)
 class VideoBase(SQLModel):
     title: str = Field(min_length=1, max_length=128, index=True)
-    youtube_code: str 
+    youtube_code: str = Field(regex='[^ ]{11}')
     # Link to Category model
     category_id: int = Field(foreign_key='category.id')
 
@@ -19,7 +19,7 @@ class Video(VideoBase, table=True):
     date_created: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     # Date this row was last changed, defaults to None 
     date_last_changed: Optional[datetime] = Field(default=None, nullable=True)
-    
+
 # CategoryBase class (no  SQL table)
 class CategoryBase(SQLModel):
     name: str = Field(min_length=3, max_length=15, index=True)
