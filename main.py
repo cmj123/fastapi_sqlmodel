@@ -2,7 +2,7 @@ from fastapi import FastAPI, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import HTMLResponse
 from sqlmodel import SQLModel, Session, select
-from models import Category, CategoryBase
+from models import Category, CategoryBase, Video, VideoBase
 from database import engine 
 import uvicorn
 from typing import List
@@ -19,6 +19,23 @@ async def home():
     <h1>Home Page</h1>
     <a href='http://127.0.0.1:8000/docs'>http://127.0.0.1:8000/docs</a>
     '''
+
+# region  video_routes
+@app.post('/video', status_code=status.HTTP_201_CREATED)
+async def post_a_video(video:VideoBase):
+    # Create a new video object from data passed in 
+    new_video = Video.from_orm(video)
+    # make sure new video has a valid category id
+    if not await is_category_id(new_video.category_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No such category")
+    # Post the video
+    with Session(engine) as session:
+        session.add(new_video)
+        session.commit()
+        session.refresh(new_video)
+    return new_video
+
+# endregion
 # region categories_routes
 
 # Get all categories
@@ -96,6 +113,15 @@ async def is_category_name(category_name:str):
     if session.exec(
         select(Category).where(Category.name == category_name)
     ).one_or_none():
+        return True
+    return False
+
+# returns True if video id exists and is_active is True, otherwise return False
+async def is_active_video(video_id: int):
+    if session.exec(
+        # Select where video id is valid and is_active is True
+        select(Video).where(Video.id == video_id, Video.is_active)
+        )   .one_or_none():
         return True
     return False
 
