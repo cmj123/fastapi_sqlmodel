@@ -6,6 +6,7 @@ from models import Category, CategoryBase, Video, VideoBase
 from database import engine 
 import uvicorn
 from typing import List
+from datetime import datetime
 
 # Define main app name and database session name
 app = FastAPI()
@@ -34,6 +35,21 @@ async def post_a_video(video:VideoBase):
         session.commit()
         session.refresh(new_video)
     return new_video
+
+# Delete one video by changing is_active to False
+@app.delete('/Video/{video_id}')
+async def delete_a_video(video_id: int):
+    if not await is_active_video(video_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail= "No such video")
+    with Session(engine) as session:
+        # Get the video to delete
+        video = session.get(Video, video_id)
+        # Set is_active to False, and update date last changed 
+        video.is_active = False
+        video.date_last_changed = datetime.utcnow()
+        session.commit()
+    return {'Deleted': video_id}
+
 
 # endregion
 # region categories_routes
@@ -121,7 +137,7 @@ async def is_active_video(video_id: int):
     if session.exec(
         # Select where video id is valid and is_active is True
         select(Video).where(Video.id == video_id, Video.is_active)
-        )   .one_or_none():
+        ).one_or_none():
         return True
     return False
 
